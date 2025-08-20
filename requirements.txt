@@ -2,3 +2,4 @@ streamlit
 geopy
 numpy
 pandas
+sklearn
