@@ -3,3 +3,4 @@ geopy
 numpy
 pandas
 pickle
+pip
