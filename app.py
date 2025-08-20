@@ -1,4 +1,3 @@
-pip install --upgrade pip
 import streamlit as st
 import pickle
 import numpy as np
@@ -92,4 +91,5 @@ with col3:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
