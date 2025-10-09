@@ -75,8 +75,8 @@ with col1:
         # ==================================================
         # Extracting location details, like city and country
         # ==================================================
-        # Initialize the geolocator
-      from geopy.geocoders import Nominatim
+        # Initialize the geolocator 
+from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 
 # Use a custom user agent and a timeout
@@ -198,6 +198,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
