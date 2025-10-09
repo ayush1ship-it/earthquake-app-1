@@ -1,28 +1,32 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
 
 # Load dataset
-df = pd.read_csv('Japan_processed.csv')
+#df = pd.read_csv('Japan_processed.csv')
+df = pd.read_csv('USGS_processed.csv')
 print(df.head())
 
 # Checking for missing values
 missing_per_column = df.isnull().sum()
 print(missing_per_column)
 
-fig, ax = plt.subplots(figsize=(7, 5))
+# Histogram for Distribution of Earthquake Magnitudes (ALL)
+#----------------------------------------------------------
+plt.hist(df['Magnitude'], bins=np.arange(2.5, 9.0, 0.25), edgecolor='black')
+plt.xlabel('Magnitude')
+plt.ylabel('Frequency')
+plt.title('Distribution of Earthquake Magnitudes')
+plt.show()
 
-# Plot Magnitude
-#---------------
-ax.plot(df.index, df['Magnitude'], color='b')
-ax.set_ylabel('Magnitude')
-ax.set_xlabel('Index of Earthquake in Database')
-ax.set_title('Magnitude of Earthquakes in Japan')
-# Set y-ticks for Magnitude from 3.2 to 6.0 with a step of 0.2
-magnitude_ticks = np.arange(3.0, 6.25, 0.25)
-ax.set_yticks(magnitude_ticks)
-plt.show()          # Display the plot
-
+# Histogram for Distribution of Earthquake Magnitudes (ABOVE 6.0)
+#----------------------------------------------------------------
+plt.hist(df['Magnitude'], bins=np.arange(6.0, 9.0, 0.25), edgecolor='black')
+plt.xlabel('Magnitude')
+plt.ylabel('Frequency')
+plt.title('Distribution of Earthquake Magnitudes [Magnitude 6.0 and above]')
+plt.show()
 
 # Plotting average mag per month and year
 #-----------------------------------------
@@ -34,7 +38,7 @@ plt.figure(figsize=(8, 5))
 # First plot: Average mag per month
 plt.subplot(1, 2, 1)
 plt.plot(monthly_stats.index, monthly_stats['Magnitude']['mean'], label='Avg Magnitude (Mean)', marker='o')
-x_ticks = np.arange(1, 12, 1)
+x_ticks = np.arange(1, 13, 1)
 plt.xticks(ticks = x_ticks)
 plt.title('Average Magnitude per Month')
 plt.xlabel('Month')
@@ -44,7 +48,7 @@ plt.legend()
 # Second plot: Average mag per year with mean and median
 plt.subplot(1, 2, 2)
 plt.plot(yearly_stats.index, yearly_stats['Magnitude']['mean'], label='Avg Magnitude (Mean)', marker='o')
-x_ticks = np.arange(2019, 2024, 1)
+x_ticks = np.arange(2015, 2026, 1)
 plt.xticks(ticks = x_ticks)
 plt.title('Average Magnitude per Year')
 plt.xlabel('Year')
@@ -57,9 +61,15 @@ plt.show()
 # Plotting earthquake locations
 #------------------------------
 plt.figure(figsize=(8, 6))
-plt.scatter(df['Longitude'], df['Latitude'], c=df['Magnitude'], cmap='coolwarm', s=20)
+
+# Set base size, and increase only if magnitude > 6.0
+sizes = df['Magnitude'].apply(lambda m: 20 if m > 6.0 else 5)
+
+#plt.scatter(df['Longitude'], df['Latitude'], c=df['Magnitude'], cmap='coolwarm', s=20)
+plt.scatter(df['Longitude'], df['Latitude'], c=df['Magnitude'], cmap='coolwarm', s=sizes, alpha=0.7)
+
 plt.colorbar(label='Magnitude')
-plt.title('Earthquake Locations (Color-coded by Magnitude)')
+plt.title('Earthquake Locations (Jan 2015 to Jun 2025) - Color-coded by Magnitude')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.show()

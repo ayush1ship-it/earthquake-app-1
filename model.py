@@ -1,55 +1,48 @@
-import pickle
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from tabulate import tabulate
+from sklearn.metrics import mean_squared_error, accuracy_score
+import joblib
 import warnings
 
 warnings.filterwarnings("ignore")
 
-# Load dataset
-df = pd.read_csv('Japan_processed.csv')
+# ======================================
+# Step 1: Load & Set Features and Target
+# ======================================
 
-X = df[['Latitude', 'Longitude', 'Month']]
-y = df[['Magnitude']]
+# Load your CSV
+df = pd.read_csv("USGS_processed.csv")
+#print(df.head())
 
-# Split the data into training and testing sets (80:20)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Features and targets
+X = df[['Month', 'Latitude', 'Longitude']]
+y_mag = df['Magnitude']
 
-# Initialize the RandomForestRegressor for multi-output prediction
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+# ===========================
+# Step 2: Train Models
+# ===========================
 
-# Train the model
-rf_model.fit(X_train, y_train)
+# Magnitude prediction model
+X_train1, X_test1, y_train1, y_test1 = train_test_split(X, y_mag, test_size=0.2, random_state=42)
+mag_model = RandomForestRegressor(n_estimators=100, random_state=42)
+mag_model.fit(X_train1, y_train1)
+y_mag_pred = mag_model.predict(X_test1)
 
-# Make predictions
-y_pred = rf_model.predict(X_test)
+# ===========================
+# Step 3: Evaluate Models
+# ===========================
 
-# Evaluation metrics
-mae = mean_absolute_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
+print("\nModel Evaluation:")
+print(f"Earthquake Magnitude RMSE: {mean_squared_error(y_test1, y_mag_pred):.3f}")
 
-# Store evaluation metrics in a list
-rf_metrics = [mae, mse, rmse, r2]
-for idx, x in enumerate(rf_metrics):
-    rf_metrics[idx] = round(rf_metrics[idx], 2)
+# ===========================
+# Step 4: Save Models (Optional)
+# ===========================
 
-# Create a list of headers and rows for tabulate
-headers = ['Metric', 'Random Forest']
-rows = [
-    ['MAE'] + rf_metrics[0:1],
-    ['MSE'] + rf_metrics[1:2],
-    ['RMSE'] + rf_metrics[2:3],
-    ['R² Score'] + rf_metrics[3:4]
-]
+joblib.dump(mag_model, "quake_mag_model.pkl")
 
-# Generate and print the table
-table = tabulate(rows, headers=headers, tablefmt='grid')
-print(table)
-
-# Save the model to a pickle file
-with open('random_forest_regressor.pkl', 'wb') as pickle_file:
-    pickle.dump(rf_model, pickle_file)
+'''
+Model Evaluation:
+Earthquake Magnitude RMSE: 0.189
+'''
