@@ -82,13 +82,13 @@ with col1:
             location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
     # Extract city and country
         if location and 'address' in location.raw:
-          address = location.raw['address']
-          city = address.get('city') or address.get('town') or address.get('village') or address.get('municipality') or 'Unknown'
-          country = address.get('country', 'Unknown')
+            address = location.raw['address']
+            city = address.get('city') or address.get('town') or address.get('village') or address.get('municipality') or 'Unknown'
+            country = address.get('country', 'Unknown')
         else:
-          city, country = 'Unknown', 'Unknown'
-        except Exception:
-          city, country = 'Unknown', 'Unknown'
+            city, country = 'Unknown', 'Unknown'
+     except Exception:
+            city, country = 'Unknown', 'Unknown'
 
         # ==================================================
 
@@ -192,6 +192,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
