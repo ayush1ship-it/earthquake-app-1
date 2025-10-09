@@ -88,7 +88,7 @@ with col1:
         else:
             city, country = 'Unknown', 'Unknown'
      except Exception:
-            city, country = 'Unknown', 'Unknown'
+        city, country = 'Unknown', 'Unknown'
 
         # ==================================================
 
@@ -192,6 +192,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
