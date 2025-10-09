@@ -76,26 +76,21 @@ with col1:
         # Extracting location details, like city and country
         # ==================================================
         # Initialize the geolocator 
-        from geopy.geocoders import Nominatim
-        from geopy.extra.rate_limiter import RateLimiter
-
-# Use a custom user agent and a timeout
-        geolocator = Nominatim(user_agent="app.py", timeout=10)
-
-        # Add a rate limiter to avoid being blocked
-        reverse = RateLimiter(geolocator.reverse, min_delay_seconds=1)
-
-        geolocator = Nominatim(user_agent="city_country_finder")
-        # Reverse geocoding
+        # Initialize the geolocator with proper user agent and timeout
+        geolocator = Nominatim(user_agent="earthquake_app", timeout=10)
+        try:
+    # Reverse geocoding
         location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
-        # Extract city and country
+    # Extract city and country
         if location and 'address' in location.raw:
-            address = location.raw['address']
-            city = address.get('city') or address.get('town') or address.get('village') or address.get(
-                'municipality') or 'Unknown'
-            country = address.get('country', 'Unknown')
+          address = location.raw['address']
+          city = address.get('city') or address.get('town') or address.get('village') or address.get('municipality') or 'Unknown'
+          country = address.get('country', 'Unknown')
         else:
-            city, country = 'Unknown', 'Unknown'
+          city, country = 'Unknown', 'Unknown'
+        except Exception:
+          city, country = 'Unknown', 'Unknown'
+
         # ==================================================
 
         # ==================================================
@@ -198,6 +193,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
