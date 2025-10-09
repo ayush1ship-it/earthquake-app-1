@@ -1,45 +1,84 @@
 import streamlit as st
-import pickle
+import joblib
 import numpy as np
 import pandas as pd
 from geopy.geocoders import Nominatim
-
+import matplotlib.pyplot as plt
+from datetime import datetime
 # Load the trained model
-with open('random_forest_regressor.pkl', 'rb') as pickf:
-    model = pickle.load(pickf)
+mag_model = joblib.load("quake_mag_model.pkl")
 
 # --- Set Page Config ---
-st.set_page_config(page_title="Earthquake Predictor", layout="wide")
+st.set_page_config(page_title="Earthquake Magnitude Predictor", layout="wide")
 st.markdown("<style>.stApp {background-color:#f0f8ff;}</style>", unsafe_allow_html=True)
-st.markdown("<h2 style='text-align: center; margin-top:0px; padding-top:0px;'>Earthquake Predictor</h2>",
+st.markdown("""<style>.center-table {margin-left: auto; margin-right: auto; margin-top:0px; text-align: center;}
+                .center-table th, .center-table td {text-align: center !important; padding:3px; }
+                </style>""", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; margin-top:0px; padding-top:0px;'>Earthquake Magnitude Predictor</h2>",
             unsafe_allow_html=True)
 st.write("<h4 style='text-align: center; margin-top:0px; padding-top:0px;'><i>Transforming Seismic Data into "
          "Life-Saving Insights</i></h4>", unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3)
+years = [2025, 2026, 2027, 2028, 2029]
+months = {
+    "January": 1, "February": 2, "March": 3, "April": 4, "May": 5, "June": 6,
+    "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
+}
 
+# ==============================================
+# ENTER DETAILS SECTION
+# ==============================================
+col1, col2, col3, col4, col5 = st.columns(5, vertical_alignment="bottom")
 with col1:
-    st.subheader("Enter Details")
-    months = [1,2,3,4,5,6,7,8,9,10,11,12]
-    inp_latitude = st.number_input("Latitude (24.0° N to 46° N)", min_value=24.0, max_value=46.0, value=35.47, step=0.000001, format="%0.6f")
-    inp_longitude = st.number_input("Longitude (122° E to 146° E)", min_value=122.0, max_value=145.8, value=140.07, step=0.000001, format="%0.6f")
-    # inp_depth = st.number_input("Depth (2.0 km to 442.0 km)", min_value=2.0, max_value=442.0, value=10.00)
-    inp_month = st.selectbox("Select a month:", months)
+    st.write("<h4 style='margin-top:0px; padding-top:0px;'>Enter Details</h4>", unsafe_allow_html=True)
+with col2:
+    inp_month_name = st.selectbox("Month", list(months.keys()))
+    inp_month = months[inp_month_name]
+with col3:
+    inp_latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0, value=0.00, step=0.01, format="%0.2f")
+with col4:
+    inp_longitude = st.number_input("Longitude", min_value=-180.0, max_value=180.0, value=0.00, step=0.01,
+                                    format="%0.2f")
+with col5:
     submit = st.button("Predict")
 
-with col2:
-    st.subheader("Prediction")
+lat_grid = round(inp_latitude, 1)
+lon_grid = round(inp_longitude, 1)
+# ==============================================
+
+# ==============================================
+# PREDICTION SECTION
+# ==============================================
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.write("")
+    st.write("<h4 style='margin-top:0px; padding-top:0px;'>Prediction</h4>", unsafe_allow_html=True)
 
     if submit:
-        input_data = np.array([[inp_latitude, inp_longitude, inp_month]])
-        prediction = np.round(model.predict(input_data), 2)
+        input_data = np.array([[inp_month, lat_grid, lon_grid]])
+        predicted_mag = np.round(mag_model.predict(input_data)[0], 2)
 
+        # ==================================================
+        # Computing Prediction Interval
+        #==================================================
+        # Get predictions from all trees
+        all_tree_predictions = np.array([tree.predict(input_data)[0] for tree in mag_model.estimators_])
+        # Mean prediction
+        predicted_mean_mag = np.mean(all_tree_predictions)
+        # Standard deviation across trees
+        std_dev = np.std(all_tree_predictions)
+        # Prediction Interval
+        lower = predicted_mean_mag - 1.96 * std_dev
+        upper = predicted_mean_mag + 1.96 * std_dev
+        #==================================================
+
+        # ==================================================
         # Extracting location details, like city and country
+        # ==================================================
         # Initialize the geolocator
         geolocator = Nominatim(user_agent="city_country_finder")
         # Reverse geocoding
-        location = geolocator.reverse((inp_latitude, inp_longitude), exactly_one=True,
-                                      language='en')  # Replace with your lat, lon
+        location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
         # Extract city and country
         if location and 'address' in location.raw:
             address = location.raw['address']
@@ -48,48 +87,104 @@ with col2:
             country = address.get('country', 'Unknown')
         else:
             city, country = 'Unknown', 'Unknown'
+        # ==================================================
 
-        # Get month name from month number given by user
-        if inp_month == 1:
-            month_name = "January"
-        elif inp_month == 2:
-            month_name = "February"
-        elif inp_month == 3:
-            month_name = "March"
-        elif inp_month == 4:
-            month_name = "April"
-        elif inp_month == 5:
-            month_name = "May"
-        elif inp_month == 6:
-            month_name = "June"
-        elif inp_month == 7:
-            month_name = "July"
-        elif inp_month == 8:
-            month_name = "August"
-        elif inp_month == 9:
-            month_name = "September"
-        elif inp_month == 10:
-            month_name = "October"
-        elif inp_month == 11:
-            month_name = "November"
-        elif inp_month == 12:
-            month_name = "December"
+        # ==================================================
+        # Display Output
+        # ==================================================
+        col11, col12 = st.columns([1.5, 1])
+        with col11:
+            # ====================
+            # Predicted Magnitude
+            # ====================
+            st.success(
+                f"Earthquake of magnitude **{predicted_mag}** is predicted at **{city}**, **{country}** in "
+                f"**{inp_month_name}**  \n95% Prediction Interval: [**{lower:.2f}, {upper:.2f}**]"
+            )
 
-        st.success(f"Earthquake of magnitude **{prediction}** is predicted at **{city}**, **{country}** in "
-                   f"**{month_name}**")
+            if predicted_mag <= 4.0:
+                st.info(f"**Low Magnitude (Minor)** \n- Usually not felt. \n- Little to no damage.")
+            elif 4.0 < predicted_mag <= 5.9:
+                st.warning(f"**Moderate Magnitude** \n- Can cause minor to moderate damage, especially near the "
+                           f"epicenter. \n- Buildings may shake, and some structures could develop cracks")
+            else:
+                st.error(
+                    f"**High Magnitude (Major)** \n- Can cause significant to catastrophic damage, particularly in "
+                    f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
 
-        if prediction <= 4.0:
-            st.info(f"**Low Magnitude (Minor)** \n- Usually not felt. \n- Little to no damage.")
-        elif 4.0 < prediction <= 5.9:
-            st.warning(f"**Moderate Magnitude** \n- Can cause minor to moderate damage, especially near the "
-                       f"epicenter. \n- Buildings may shake, and some structures could develop cracks")
-        else:
-            st.error(f"**High Magnitude (Major)** \n- Can cause significant to catastrophic damage, particularly in "
-                     f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
+        with col12:
+            # ===========================================================
+            # Show past earthquakes for given location and month (max 5)
+            # ===========================================================
+            usgs_df = pd.read_csv("USGS_processed.csv")
 
-with col3:
+            # Add grid columns and datetime
+            usgs_df['Lat_grid'] = usgs_df['Latitude'].round(1)
+            usgs_df['Lon_grid'] = usgs_df['Longitude'].round(1)
+            usgs_df['Date'] = pd.to_datetime(usgs_df['Date'])
+
+            # Filter for matching grid and month (any year)
+            filtered = usgs_df[
+                (usgs_df['Lat_grid'] == lat_grid) &
+                (usgs_df['Lon_grid'] == lon_grid)
+                ].sort_values(by='Date', ascending=False)
+
+            st.write(f"<h6 style='margin-top:0px; padding-top:0px; text-align:center; font-weight:normal;'>"
+                     f"Past Earthquakes at<br><b style='font-size:16px; color:blue;'>Latitude: {inp_latitude}, Longitude: {inp_longitude}</b>"
+                     f"<br> (Max. 5)</h4>",
+                     unsafe_allow_html=True)
+
+            if filtered.empty:
+                st.write("<h6 style='margin-top:0px; padding-top:0px;'>No matching records found.</h4>",
+                         unsafe_allow_html=True)
+            else:
+                df_last5 = filtered[['Date', 'Magnitude']].head(5)
+                # Format the Date column
+                df_last5['Date'] = pd.to_datetime(df_last5['Date']).dt.strftime('%d-%b-%Y')
+
+                # Convert to HTML with center alignment
+                html_table = df_last5.to_html(index=False, classes='center-table')
+                st.markdown(html_table, unsafe_allow_html=True)
+            # ===========================================================
+
+        # ===========================================================
+        # Trend Forecast for next 12 months
+        # ===========================================================
+        # Generate next 12 months from input date
+        current_year = datetime.now().year
+        start_date = pd.Timestamp(year=current_year, month=inp_month, day=1)
+        future_dates = pd.date_range(start=start_date, periods=12, freq="M")
+        forecast_features = [[d.month, lat_grid, lon_grid] for d in future_dates]
+
+        all_preds = np.array([
+            [tree.predict([f])[0] for tree in mag_model.estimators_]
+            for f in forecast_features
+        ])
+        mean_preds = np.mean(all_preds, axis=1)
+        std_preds = np.std(all_preds, axis=1)
+        lower = mean_preds - 1.96 * std_preds
+        upper = mean_preds + 1.96 * std_preds
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(future_dates, mean_preds, marker="o", label="Predicted Magnitude", color="blue")
+        ax.fill_between(future_dates, lower, upper, color="lightblue", alpha=0.4, label="95% Prediction Interval")
+
+        # Format x-axis as only Month names (e.g., Jan, Feb, Mar)
+        month_labels = [d.strftime("%b") for d in future_dates]
+        ax.set_xticks(future_dates)
+        ax.set_xticklabels(month_labels, rotation=0)
+
+        ax.set_title(f"Earthquake Magnitude Forecast (Latitude: {inp_latitude}, Longitude: {inp_longitude})"
+                     f" for Next 12 Months")
+        ax.set_xlabel("Month")
+        ax.set_ylabel("Predicted Magnitude")
+        ax.legend()
+        ax.grid(True)
+        fig.tight_layout()
+        st.pyplot(fig)
+with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
 
-
+# streamlit run app.py
