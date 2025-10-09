@@ -6,3 +6,4 @@ joblib
 datetime
 plotly
 scikit-learn
+matplotlib
