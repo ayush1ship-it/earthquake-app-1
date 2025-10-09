@@ -8,3 +8,4 @@ joblib
 warnings
 datetime
 plotly
+scikit-learn
