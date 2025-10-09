@@ -6,7 +6,7 @@ from geopy.geocoders import Nominatim
 import matplotlib.pyplot as plt
 from datetime import datetime
 # Load the trained model
-mag_model = joblib.load("random_forest_regressor".pkl")
+mag_model = joblib.load("random_forest_regressor.pkl")
 
 # --- Set Page Config ---
 st.set_page_config(page_title="Earthquake Magnitude Predictor", layout="wide")
@@ -189,3 +189,4 @@ with col2:
 
 
 # streamlit run app.py
+
