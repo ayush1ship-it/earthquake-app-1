@@ -79,8 +79,7 @@ with col1:
         # Initialize the geolocator with proper user agent and timeout
         geolocator = Nominatim(user_agent="earthquake_app", timeout=10)
         try:
-    # Reverse geocoding
-        location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
+            location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
     # Extract city and country
         if location and 'address' in location.raw:
           address = location.raw['address']
@@ -193,6 +192,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
