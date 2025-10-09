@@ -5,6 +5,7 @@ import pandas as pd
 from geopy.geocoders import Nominatim
 import matplotlib.pyplot as plt
 from datetime import datetime
+
 # Load the trained model
 mag_model = joblib.load("random_forest_regressor.pkl")
 
@@ -61,13 +62,9 @@ with col1:
         # ==================================================
         # Computing Prediction Interval
         #==================================================
-        # Get predictions from all trees
         all_tree_predictions = np.array([tree.predict(input_data)[0] for tree in mag_model.estimators_])
-        # Mean prediction
         predicted_mean_mag = np.mean(all_tree_predictions)
-        # Standard deviation across trees
         std_dev = np.std(all_tree_predictions)
-        # Prediction Interval
         lower = predicted_mean_mag - 1.96 * std_dev
         upper = predicted_mean_mag + 1.96 * std_dev
         #==================================================
@@ -75,21 +72,18 @@ with col1:
         # ==================================================
         # Extracting location details, like city and country
         # ==================================================
-        # Initialize the geolocator 
-        # Initialize the geolocator with proper user agent and timeout
         geolocator = Nominatim(user_agent="earthquake_app", timeout=10)
         try:
             location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
-    # Extract city and country
-        if location and 'address' in location.raw:
-            address = location.raw['address']
-            city = address.get('city') or address.get('town') or address.get('village') or address.get('municipality') or 'Unknown'
-            country = address.get('country', 'Unknown')
-        else:
+            if location and 'address' in location.raw:
+                address = location.raw['address']
+                city = address.get('city') or address.get('town') or address.get('village') or address.get(
+                    'municipality') or 'Unknown'
+                country = address.get('country', 'Unknown')
+            else:
+                city, country = 'Unknown', 'Unknown'
+        except Exception:
             city, country = 'Unknown', 'Unknown'
-     except Exception:
-        city, country = 'Unknown', 'Unknown'
-
         # ==================================================
 
         # ==================================================
@@ -97,9 +91,6 @@ with col1:
         # ==================================================
         col11, col12 = st.columns([1.5, 1])
         with col11:
-            # ====================
-            # Predicted Magnitude
-            # ====================
             st.success(
                 f"Earthquake of magnitude **{predicted_mag}** is predicted at **{city}**, **{country}** in "
                 f"**{inp_month_name}**  \n95% Prediction Interval: [**{lower:.2f}, {upper:.2f}**]"
@@ -116,17 +107,11 @@ with col1:
                     f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
 
         with col12:
-            # ===========================================================
-            # Show past earthquakes for given location and month (max 5)
-            # ===========================================================
             usgs_df = pd.read_csv("USGS_processed.csv")
-
-            # Add grid columns and datetime
             usgs_df['Lat_grid'] = usgs_df['Latitude'].round(1)
             usgs_df['Lon_grid'] = usgs_df['Longitude'].round(1)
             usgs_df['Date'] = pd.to_datetime(usgs_df['Date'])
 
-            # Filter for matching grid and month (any year)
             filtered = usgs_df[
                 (usgs_df['Lat_grid'] == lat_grid) &
                 (usgs_df['Lon_grid'] == lon_grid)
@@ -142,18 +127,13 @@ with col1:
                          unsafe_allow_html=True)
             else:
                 df_last5 = filtered[['Date', 'Magnitude']].head(5)
-                # Format the Date column
                 df_last5['Date'] = pd.to_datetime(df_last5['Date']).dt.strftime('%d-%b-%Y')
-
-                # Convert to HTML with center alignment
                 html_table = df_last5.to_html(index=False, classes='center-table')
                 st.markdown(html_table, unsafe_allow_html=True)
-            # ===========================================================
 
         # ===========================================================
         # Trend Forecast for next 12 months
         # ===========================================================
-        # Generate next 12 months from input date
         current_year = datetime.now().year
         start_date = pd.Timestamp(year=current_year, month=inp_month, day=1)
         future_dates = pd.date_range(start=start_date, periods=12, freq="M")
@@ -172,7 +152,6 @@ with col1:
         ax.plot(future_dates, mean_preds, marker="o", label="Predicted Magnitude", color="blue")
         ax.fill_between(future_dates, lower, upper, color="lightblue", alpha=0.4, label="95% Prediction Interval")
 
-        # Format x-axis as only Month names (e.g., Jan, Feb, Mar)
         month_labels = [d.strftime("%b") for d in future_dates]
         ax.set_xticks(future_dates)
         ax.set_xticklabels(month_labels, rotation=0)
@@ -189,17 +168,3 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
-
-
-# streamlit run app.py
-
-
-
-
-
-
-
-
-
-
-
