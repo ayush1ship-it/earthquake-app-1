@@ -80,7 +80,7 @@ with col1:
         from geopy.extra.rate_limiter import RateLimiter
 
 # Use a custom user agent and a timeout
-        geolocator = Nominatim(user_agent="earthquake-app-1", timeout=10)
+        geolocator = Nominatim(user_agent="app.py", timeout=10)
 
         # Add a rate limiter to avoid being blocked
         reverse = RateLimiter(geolocator.reverse, min_delay_seconds=1)
@@ -198,6 +198,7 @@ with col2:
 
 
 # streamlit run app.py
+
 
 
 
