@@ -3,7 +3,6 @@ geopy
 numpy
 pandas
 joblib
-warnings
 datetime
 plotly
 scikit-learn
