@@ -72,6 +72,7 @@ with col1:
         # ==================================================
         # Extracting location details, like city and country
         # ==================================================
+        geolocator = Nominatim(user_agent="city_country_finder")
         geolocator = Nominatim(user_agent="earthquake_app", timeout=10)
         try:
             location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
@@ -168,3 +169,4 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
