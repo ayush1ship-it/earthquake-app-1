@@ -81,13 +81,7 @@ with col1:
                     'municipality') or 'Unknown'
                 country = address.get('country', 'Unknown')
             else:
-                city, country = 'Unknown', 'Unknown'
-            except:
-        # ==================================================
-
-        # ==================================================
-        # Display Output
-        # ==================================================
+                city, country = 'Unknown', 'Unknown
         col11, col12 = st.columns([1.5, 1])
         with col11:
             st.success(
@@ -167,6 +161,7 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
 
 
