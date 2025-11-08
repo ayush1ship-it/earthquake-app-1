@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import datetime
 
 # Load the trained model
-mag_model = joblib.load("quake_mag_model.pkl")
+mag_model = joblib.load("random_forest_regressor.pkl")
 
 # --- Set Page Config ---
 st.set_page_config(page_title="Earthquake Magnitude Predictor", layout="wide")
@@ -199,3 +199,4 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
