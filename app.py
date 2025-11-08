@@ -83,7 +83,7 @@ with col1:
         # Extracting location details, like city and country
         # (Now using OpenCage for reliability)
         # ==================================================
-        API_KEY = "YOUR_OPENCAGE_API_KEY_HERE"  # 🔑 Replace this with your actual API key
+        API_KEY = "31713ef3db3e44c884c35a1caa51466b"  # 🔑 Replace this with your actual API key
         geolocator = OpenCage(api_key=API_KEY)
 
         location = None
@@ -197,4 +197,5 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
