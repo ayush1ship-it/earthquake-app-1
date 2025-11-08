@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 from geopy.geocoders import Nominatim
 import matplotlib.pyplot as plt
-#from datetime
 import datetime
+import time
+from geopy.exc import GeocoderUnavailable, GeocoderServiceError
 
 # Load the trained model
 mag_model = joblib.load("random_forest_regressor.pkl")
@@ -21,7 +22,6 @@ st.markdown("<h2 style='text-align: center; margin-top:0px; padding-top:0px;'>Ea
 st.write("<h4 style='text-align: center; margin-top:0px; padding-top:0px;'><i>Transforming Seismic Data into "
          "Life-Saving Insights</i></h4>", unsafe_allow_html=True)
 
-# years = [2025, 2026, 2027, 2028, 2029]
 months = {
     "January": 1, "February": 2, "March": 3, "April": 4, "May": 5, "June": 6,
     "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12
@@ -38,12 +38,10 @@ col1, col2, col3, col4, col5 = st.columns(5, vertical_alignment="bottom")
 with col1:
     st.write("<h4 style='margin-top:0px; padding-top:0px;'>Enter Details</h4>", unsafe_allow_html=True)
 with col2:
-    # Define the range for 2026
     start_date = datetime.date(2026, 1, 1)
     end_date = datetime.date(2026, 12, 31)
     inp_date = st.date_input("Choose date", min_value=start_date, max_value=end_date)
 
-    # day = inp_date.day
     inp_month = inp_date.month
     inp_year = inp_date.year
     inp_month_name = month_names[inp_month]
@@ -73,59 +71,46 @@ with col1:
 
         # ==================================================
         # Computing Prediction Interval
-        #==================================================
-        # Get predictions from all trees
+        # ==================================================
         all_tree_predictions = np.array([tree.predict(input_data)[0] for tree in mag_model.estimators_])
-        # Mean prediction
         predicted_mean_mag = np.mean(all_tree_predictions)
-        # Standard deviation across trees
         std_dev = np.std(all_tree_predictions)
-        # Prediction Interval
         lower = predicted_mean_mag - 1.96 * std_dev
         upper = predicted_mean_mag + 1.96 * std_dev
-        #==================================================
+        # ==================================================
 
         # ==================================================
-       # ==================================================
-# Extracting location details, like city and country
-# ==================================================
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderUnavailable, GeocoderServiceError
-import time
+        # Extracting location details, like city and country
+        # (Fixed version for Streamlit Cloud)
+        # ==================================================
+        geolocator = Nominatim(user_agent="earthquake_predictor_streamlit_app_ayush_2025")
 
-# Initialize the geolocator with a unique user agent (required for Streamlit Cloud)
-geolocator = Nominatim(user_agent="earthquake_predictor_streamlit_app_ayush_2025")
+        location = None
+        for attempt in range(3):
+            try:
+                location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en', timeout=10)
+                if location:
+                    break
+            except (GeocoderUnavailable, GeocoderServiceError, ConnectionError, TimeoutError):
+                time.sleep(2)
+            except Exception:
+                break
 
-# Try reverse geocoding with retries and silent fallback
-location = None
-for attempt in range(3):
-    try:
-        location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en', timeout=10)
-        if location:
-            break
-    except (GeocoderUnavailable, GeocoderServiceError, ConnectionError, TimeoutError):
-        time.sleep(2)  # brief delay before retry
-    except Exception:
-        break  # prevents Streamlit from showing any traceback
-
-# Extract city and country safely (fallback if lookup fails)
-try:
-    if location and 'address' in location.raw:
-        address = location.raw['address']
-        city = (
-            address.get('city')
-            or address.get('town')
-            or address.get('village')
-            or address.get('municipality')
-            or 'Unknown'
-        )
-        country = address.get('country', 'Unknown')
-    else:
-        city, country = 'Unknown', 'Unknown'
-except Exception:
-    city, country = 'Unknown', 'Unknown'
-# ==================================================
-
+        try:
+            if location and 'address' in location.raw:
+                address = location.raw['address']
+                city = (
+                    address.get('city')
+                    or address.get('town')
+                    or address.get('village')
+                    or address.get('municipality')
+                    or 'Unknown'
+                )
+                country = address.get('country', 'Unknown')
+            else:
+                city, country = 'Unknown', 'Unknown'
+        except Exception:
+            city, country = 'Unknown', 'Unknown'
         # ==================================================
 
         # ==================================================
@@ -133,9 +118,6 @@ except Exception:
         # ==================================================
         col11, col12 = st.columns([1.5, 1])
         with col11:
-            # ====================
-            # Predicted Magnitude
-            # ====================
             st.success(
                 f"Earthquake of magnitude **{predicted_mag}** is predicted at **{city}**, **{country}** in "
                 f"**{inp_month_name}, 2026**  \n95% Prediction Interval: [**{lower:.2f}, {upper:.2f}**]"
@@ -152,21 +134,15 @@ except Exception:
                     f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
 
         with col12:
-            # ===========================================================
-            # Show past earthquakes for given location and month (max 5)
-            # ===========================================================
             usgs_df = pd.read_csv("USGS_processed.csv")
-
-            # Add grid columns and datetime
             usgs_df['Lat_grid'] = usgs_df['Latitude'].round(1)
             usgs_df['Lon_grid'] = usgs_df['Longitude'].round(1)
             usgs_df['Date'] = pd.to_datetime(usgs_df['Date'])
 
-            # Filter for matching grid and month (any year)
             filtered = usgs_df[
                 (usgs_df['Lat_grid'] == lat_grid) &
                 (usgs_df['Lon_grid'] == lon_grid)
-                ].sort_values(by='Date', ascending=False)
+            ].sort_values(by='Date', ascending=False)
 
             st.write(f"<h6 style='margin-top:0px; padding-top:0px; text-align:center; font-weight:normal;'>"
                      f"Past Earthquakes at<br><b style='font-size:16px; color:blue;'>Latitude: {lat_grid}, Longitude: {lon_grid}</b>"
@@ -178,18 +154,13 @@ except Exception:
                          unsafe_allow_html=True)
             else:
                 df_last5 = filtered[['Date', 'Magnitude']].head(5)
-                # Format the Date column
                 df_last5['Date'] = pd.to_datetime(df_last5['Date']).dt.strftime('%d-%b-%Y')
-
-                # Convert to HTML with center alignment
                 html_table = df_last5.to_html(index=False, classes='center-table')
                 st.markdown(html_table, unsafe_allow_html=True)
-            # ===========================================================
 
         # ===========================================================
         # Trend Forecast for next 12 months
         # ===========================================================
-        # Generate next 12 months from input date
         start_date = pd.Timestamp(year=inp_year, month=inp_month, day=1)
         end_date = pd.Timestamp(year=2026, month=12, day=31)
         future_dates = pd.date_range(start=start_date, end=end_date, freq="M")
@@ -208,7 +179,6 @@ except Exception:
         ax.plot(future_dates, mean_preds, marker="o", label="Predicted Magnitude", color="blue")
         ax.fill_between(future_dates, lower, upper, color="lightblue", alpha=0.4, label="95% Prediction Interval")
 
-        # Format x-axis as only Month names (e.g., Jan, Feb, Mar)
         month_labels = [d.strftime("%b") for d in future_dates]
         ax.set_xticks(future_dates)
         ax.set_xticklabels(month_labels, rotation=0)
@@ -221,11 +191,8 @@ except Exception:
         ax.grid(True)
         fig.tight_layout()
         st.pyplot(fig)
+
 with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
-
-
-
-
