@@ -2,7 +2,7 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
-from geopy.geocoders import Nominatim
+from geopy.geocoders import OpenCage
 import matplotlib.pyplot as plt
 import datetime
 import time
@@ -81,9 +81,10 @@ with col1:
 
         # ==================================================
         # Extracting location details, like city and country
-        # (Fixed version for Streamlit Cloud)
+        # (Now using OpenCage for reliability)
         # ==================================================
-        geolocator = Nominatim(user_agent="earthquake_predictor_streamlit_app_ayush_2025")
+        API_KEY = "YOUR_OPENCAGE_API_KEY_HERE"  # 🔑 Replace this with your actual API key
+        geolocator = OpenCage(api_key=API_KEY)
 
         location = None
         for attempt in range(3):
@@ -97,8 +98,8 @@ with col1:
                 break
 
         try:
-            if location and 'address' in location.raw:
-                address = location.raw['address']
+            if location and 'components' in location.raw:
+                address = location.raw['components']
                 city = (
                     address.get('city')
                     or address.get('town')
@@ -134,7 +135,7 @@ with col1:
                     f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
 
         with col12:
-            usgs_df = pd.read_csv("USGS_processed_2.csv")
+            usgs_df = pd.read_csv("USGS_processed.csv")
             usgs_df['Lat_grid'] = usgs_df['Latitude'].round(1)
             usgs_df['Lon_grid'] = usgs_df['Longitude'].round(1)
             usgs_df['Date'] = pd.to_datetime(usgs_df['Date'])
@@ -196,4 +197,3 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
-
