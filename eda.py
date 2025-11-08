@@ -1,11 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.express as px
 
 # Load dataset
 #df = pd.read_csv('Japan_processed.csv')
-df = pd.read_csv('USGS_processed.csv')
+df = pd.read_csv('USGS_processed_2.csv')
 print(df.head())
 
 # Checking for missing values
@@ -48,7 +47,7 @@ plt.legend()
 # Second plot: Average mag per year with mean and median
 plt.subplot(1, 2, 2)
 plt.plot(yearly_stats.index, yearly_stats['Magnitude']['mean'], label='Avg Magnitude (Mean)', marker='o')
-x_ticks = np.arange(2015, 2026, 1)
+x_ticks = np.arange(2011, 2026, 2)
 plt.xticks(ticks = x_ticks)
 plt.title('Average Magnitude per Year')
 plt.xlabel('Year')
@@ -69,7 +68,7 @@ sizes = df['Magnitude'].apply(lambda m: 20 if m > 6.0 else 5)
 plt.scatter(df['Longitude'], df['Latitude'], c=df['Magnitude'], cmap='coolwarm', s=sizes, alpha=0.7)
 
 plt.colorbar(label='Magnitude')
-plt.title('Earthquake Locations (Jan 2015 to Jun 2025) - Color-coded by Magnitude')
+plt.title('Earthquake Locations (Jan 2011 to Jun 2025) - Color-coded by Magnitude')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.show()
