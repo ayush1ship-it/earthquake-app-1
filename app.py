@@ -135,7 +135,7 @@ with col1:
                     f"populated or poorly constructed areas. \n- Aftershocks and tsunamis may also occur.")
 
         with col12:
-            usgs_df = pd.read_csv("USGS_processed.csv")
+            usgs_df = pd.read_csv("USGS_processed_2.csv")
             usgs_df['Lat_grid'] = usgs_df['Latitude'].round(1)
             usgs_df['Lon_grid'] = usgs_df['Longitude'].round(1)
             usgs_df['Date'] = pd.to_datetime(usgs_df['Date'])
@@ -197,3 +197,4 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
