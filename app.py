@@ -89,7 +89,9 @@ with col1:
         # Extracting location details, like city and country
         # ==================================================
         # Initialize the geolocator
-        geolocator = Nominatim(user_agent="city_country_finder")
+from geopy.geocoders import Nominatim
+geolocator = Nominatim(user_agent="my_test_app")
+
         # Reverse geocoding
         location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
         # Extract city and country
@@ -199,4 +201,5 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
