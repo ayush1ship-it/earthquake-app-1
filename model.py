@@ -40,10 +40,9 @@ print(f"Earthquake Magnitude RMSE: {mean_squared_error(y_test1, y_mag_pred):.3f}
 # Step 4: Save Models (Optional)
 # ===========================
 
-joblib.dump(mag_model, "random_forest_regressor.pkl")
+joblib.dump(mag_model, "quake_mag_model.pkl")
 
 '''
 Model Evaluation:
 Earthquake Magnitude RMSE: 0.189
-
 '''
