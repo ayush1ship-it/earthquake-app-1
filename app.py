@@ -86,22 +86,46 @@ with col1:
         #==================================================
 
         # ==================================================
-        # Extracting location details, like city and country
-        # ==================================================
-        # Initialize the geolocator
-        from geopy.geocoders import Nominatim
-        geolocator = Nominatim(user_agent="my_test_app")
+       # ==================================================
+# Extracting location details, like city and country
+# ==================================================
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderUnavailable, GeocoderServiceError
+import time
 
-        # Reverse geocoding
-        location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en')
-        # Extract city and country
-        if location and 'address' in location.raw:
-            address = location.raw['address']
-            city = address.get('city') or address.get('town') or address.get('village') or address.get(
-                'municipality') or 'Unknown'
-            country = address.get('country', 'Unknown')
-        else:
-            city, country = 'Unknown', 'Unknown'
+# Initialize the geolocator with a unique user agent (required for Streamlit Cloud)
+geolocator = Nominatim(user_agent="earthquake_predictor_streamlit_app_ayush_2025")
+
+# Try reverse geocoding with retries and silent fallback
+location = None
+for attempt in range(3):
+    try:
+        location = geolocator.reverse((lat_grid, lon_grid), exactly_one=True, language='en', timeout=10)
+        if location:
+            break
+    except (GeocoderUnavailable, GeocoderServiceError, ConnectionError, TimeoutError):
+        time.sleep(2)  # brief delay before retry
+    except Exception:
+        break  # prevents Streamlit from showing any traceback
+
+# Extract city and country safely (fallback if lookup fails)
+try:
+    if location and 'address' in location.raw:
+        address = location.raw['address']
+        city = (
+            address.get('city')
+            or address.get('town')
+            or address.get('village')
+            or address.get('municipality')
+            or 'Unknown'
+        )
+        country = address.get('country', 'Unknown')
+    else:
+        city, country = 'Unknown', 'Unknown'
+except Exception:
+    city, country = 'Unknown', 'Unknown'
+# ==================================================
+
         # ==================================================
 
         # ==================================================
@@ -201,6 +225,7 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
 
 
