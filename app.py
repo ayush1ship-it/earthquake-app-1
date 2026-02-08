@@ -7,11 +7,7 @@ import matplotlib.pyplot as plt
 import datetime
 import time
 from geopy.exc import GeocoderUnavailable, GeocoderServiceError
-
-# Load the trained model
 mag_model = joblib.load("quake_mag_model.pkl")
-
-# --- Set Page Config ---
 st.set_page_config(page_title="Earthquake Magnitude Predictor", layout="wide")
 st.markdown("<style>.stApp {background-color:#f0f8ff;}</style>", unsafe_allow_html=True)
 st.markdown("""<style>.center-table {margin-left: auto; margin-right: auto; margin-top:0px; text-align: center;}
@@ -30,10 +26,6 @@ month_names = {
     1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
     7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"
 }
-
-# ==============================================
-# ENTER DETAILS SECTION
-# ==============================================
 col1, col2, col3, col4, col5 = st.columns(5, vertical_alignment="bottom")
 with col1:
     st.write("<h4 style='margin-top:0px; padding-top:0px;'>Enter Details</h4>", unsafe_allow_html=True)
@@ -55,11 +47,7 @@ with col5:
 
 lat_grid = round(inp_latitude, 1)
 lon_grid = round(inp_longitude, 1)
-# ==============================================
 
-# ==============================================
-# PREDICTION SECTION
-# ==============================================
 col1, col2 = st.columns([2, 1])
 with col1:
     st.write("")
@@ -69,21 +57,14 @@ with col1:
         input_data = np.array([[inp_month, lat_grid, lon_grid]])
         predicted_mag = np.round(mag_model.predict(input_data)[0], 2)
 
-        # ==================================================
-        # Computing Prediction Interval
-        # ==================================================
+      
         all_tree_predictions = np.array([tree.predict(input_data)[0] for tree in mag_model.estimators_])
         predicted_mean_mag = np.mean(all_tree_predictions)
         std_dev = np.std(all_tree_predictions)
         lower = predicted_mean_mag - 1.96 * std_dev
         upper = predicted_mean_mag + 1.96 * std_dev
-        # ==================================================
-
-        # ==================================================
-        # Extracting location details, like city and country
-        # (Now using OpenCage for reliability)
-        # ==================================================
-        API_KEY = "31713ef3db3e44c884c35a1caa51466b"  # 🔑 Replace this with your actual API key
+       
+        API_KEY = "31713ef3db3e44c884c35a1caa51466b"  
         geolocator = OpenCage(api_key=API_KEY)
 
         location = None
@@ -112,11 +93,7 @@ with col1:
                 city, country = 'Unknown', 'Unknown'
         except Exception:
             city, country = 'Unknown', 'Unknown'
-        # ==================================================
-
-        # ==================================================
-        # Display Output
-        # ==================================================
+       
         col11, col12 = st.columns([1.5, 1])
         with col11:
             st.success(
@@ -159,9 +136,7 @@ with col1:
                 html_table = df_last5.to_html(index=False, classes='center-table')
                 st.markdown(html_table, unsafe_allow_html=True)
 
-        # ===========================================================
-        # Trend Forecast for next 12 months
-        # ===========================================================
+       
         start_date = pd.Timestamp(year=inp_year, month=inp_month, day=1)
         end_date = pd.Timestamp(year=2026, month=12, day=31)
         future_dates = pd.date_range(start=start_date, end=end_date, freq="M")
@@ -197,6 +172,7 @@ with col2:
     if submit:
         location = pd.DataFrame({'lat': [inp_latitude], 'lon': [inp_longitude]})
         st.map(location, zoom=6)
+
 
 
 
